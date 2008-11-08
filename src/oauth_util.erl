@@ -33,17 +33,7 @@ percent_decode([$%,A,B|Etc], Decoded) when ?is_hex(A), ?is_hex(B) ->
 percent_decode([C|Etc], Decoded) when ?is_unreserved(C) ->
   percent_decode(Etc, [C|Decoded]).
 
-uri_join({Scheme, UserInfo, Host, Port, Path, Query}) ->
-  uri_join(Scheme, UserInfo, Host, Port, [Path, Query]).
-
-uri_join(http, UserInfo, Host, 80, URI) ->
-  uri_join(http, UserInfo, [Host|URI]);
-uri_join(https, UserInfo, Host, 443, URI) ->
-  uri_join(https, UserInfo, [Host|URI]);
-uri_join(Scheme, UserInfo, Host, Port, URI) ->
-  uri_join(Scheme, UserInfo, [Host, ":", Port|URI]).
-
-uri_join(Scheme, [], URI) ->
-  lists:concat([Scheme, "://"|URI]);
-uri_join(Scheme, UserInfo, URI) ->
-  lists:concat([Scheme, "://", UserInfo, "@"|URI]).
+esprintf(Fmt, Values) when is_tuple(Values) ->
+  esprintf(Fmt, tuple_to_list(Values));
+esprintf(Fmt, Values) when is_list(Values) ->
+  fmt:sprintf(Fmt, [fmt:percent_encode(Value) || Value <- Values]).

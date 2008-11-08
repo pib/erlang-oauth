@@ -1,31 +1,44 @@
-EFLAGS=-pa ebin -pa ../erlang-fmt/ebin -pa ../eunit/ebin -I../ -Iinclude
+SOURCE_FILES := $(wildcard src/*.erl)
 
-ERL := erl $(EFLAGS)
+ERLC := erlc -W +debug_info -o ebin
 
-ERL_SOURCES := $(wildcard src/*.erl)
-
-ERL_OBJECTS := $(ERL_SOURCES:src/%.erl=ebin/%.beam)
+ERL := erl -pa ebin -pa ../erlang-fmt/ebin -s crypto -s inets -s ssl
 
 
-all: objects
+all: beam_files
 
-objects: $(ERL_OBJECTS)
+beam_files: $(SOURCE_FILES:src/%.erl=ebin/%.beam)
 
 ebin/%.beam: src/%.erl
 	@test -d ebin || mkdir ebin
-	erlc $(EFLAGS) -W +debug_info -o ebin $<
+	$(ERLC) $<
+
+ebin/oauth_unit.beam: test/oauth_unit.erl
+	$(ERLC) -pa ../eunit/ebin -I../ -Iinclude test/oauth_unit.erl
+
+ebin/oauth_termie.beam: test/oauth_termie.erl
+	$(ERLC) test/oauth_termie.erl
+
+ebin/oauth_google.beam: test/oauth_google.erl
+	$(ERLC) test/oauth_google.erl
 
 clean:
 	rm -rf ebin/*.beam erl_crash.dump
 
-test: objects
-	$(ERL) -noshell -s crypto -s oauth_unit test -s init stop
+test: beam_files ebin/oauth_unit.beam
+	@$(ERL) -noshell -s oauth_unit test -s init stop
 
-termie: objects
-	$(ERL) -noshell -s crypto -s inets -s oauth_termie test -s init stop
+termie_hmac: beam_files ebin/oauth_termie.beam
+	@$(ERL) -noshell -s oauth_termie test_hmac -s init stop
 
-shell: objects
-	@$(ERL) -s crypto -s inets
+termie_rsa: beam_files ebin/oauth_termie.beam
+	@$(ERL) -noshell -s oauth_termie test_rsa -s init stop
+
+google: beam_files ebin/oauth_google.beam
+	@$(ERL) -noshell -s oauth_google test -s init stop
+
+shell: beam_files
+	@$(ERL)
 
 dialyzer:
-	dialyzer $(EFLAGS) --src -c src/
+	dialyzer --no_check_plt --src -c src/

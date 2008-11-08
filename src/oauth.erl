@@ -1,11 +1,6 @@
 -module(oauth).
 
--export([get/2]).
--export([get/3]).
--export([get/4]).
--export([post/2]).
--export([post/3]).
--export([post/4]).
+-export([get/2, get/3, get/4, post/2, post/3, post/4]).
 
 
 get(URL, Consumer) ->
@@ -17,7 +12,8 @@ get(URL, Consumer, TokenPair) ->
   get(URL, Consumer, TokenPair, []).
 
 get(URL, Consumer, TokenPair, Params) ->
-  oauth_http:get(oauth_request:url("GET", URL, Params, Consumer, TokenPair)).
+  Request = oauth_request:new("GET", URL, Params),
+  http:request(oauth_request:to_url(Request, Consumer, TokenPair)).
 
 post(URL, Consumer) ->
   post(URL, Consumer, {[], []}, []).
@@ -28,7 +24,7 @@ post(URL, Consumer, TokenPair) ->
   post(URL, Consumer, TokenPair, []).
 
 post(URL, Consumer, TokenPair, Params) ->
-  oauth_http:post(URL, {
-    "application/x-www-form-urlencoded",
-    oauth_request:params_string("POST", URL, Params, Consumer, TokenPair)
-  }).
+  Request = oauth_request:new("POST", URL, Params),
+  Data = oauth_request:to_string(Request, Consumer, TokenPair),
+  MimeType = "application/x-www-form-urlencoded",
+  http:request(post, {URL, [], MimeType, Data}, [], []).
