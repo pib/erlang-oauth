@@ -19,6 +19,13 @@ params_to_header_string_test_() ->
   ?_assertEqual(String, oauth_params:to_header_string(Params))
 ].
 
+params_from_header_string_test_() ->
+  % cf. http://oauth.net/core/1.0/#auth_header_authorization (5.4.1)
+  Params = [{oauth_consumer_key, "0685bd9184jfhq22"}, {oauth_token, "ad180jjd733klru7"}],
+  String = "oauth_consumer_key=\"0685bd9184jfhq22\",oauth_token=\"ad180jjd733klru7\"", [
+  ?_assertEqual(Params, oauth_params:from_header_string(String))
+].
+
 plaintext_signature_test_() -> [
   % cf. http://oauth.net/core/1.0/#rfc.section.9.4.1
   ?plaintext_signature_test("djr9rjt0jd78jf88", "jjd999tj88uiths3", "djr9rjt0jd78jf88%26jjd999tj88uiths3"),
