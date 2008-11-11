@@ -1,6 +1,6 @@
 -module(oauth_request).
 
--export([new/3, is_signed/1, sign/3]).
+-export([new/3, is_signed/1, sign/3, check_signature/3]).
 
 -export([to_header/2, to_header/4, to_string/3, to_string/1, to_url/3, to_url/1]).
 
@@ -15,6 +15,15 @@ sign(Request, Consumer, {Token, TokenSecret}) ->
   Params = oauth_params(Request, Consumer, Token),
   Signature = signature(Params, Request, Consumer, TokenSecret),
   setelement(3, Request, [{oauth_signature, Signature}|Params]).
+
+check_signature(Request, Consumer, {_Token, TokenSecret}) ->
+  ActualSignature = proplists:get_value("oauth_signature", params(Request)),
+  {_, Params} = proplists:split(params(Request), ["oauth_signature", "realm"]),
+  ExpectedSignature = signature(Params, Request, Consumer, TokenSecret),
+  case ActualSignature of
+    ExpectedSignature -> ok;
+    _ -> {invalid_signature, ExpectedSignature, ActualSignature}
+  end.
 
 to_header(Realm, Request, Consumer, TokenPair) ->
   to_header(Realm, sign(Request, Consumer, TokenPair)).
